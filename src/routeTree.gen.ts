@@ -9,8 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as IaRouteImport } from './routes/ia'
+import { Route as ClinicasRouteImport } from './routes/clinicas'
+import { Route as AcademiasRouteImport } from './routes/academias'
 import { Route as IndexRouteImport } from './routes/index'
 
+const NoticiasRoute = NoticiasRouteImport.update({
+  id: '/noticias',
+  path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IaRoute = IaRouteImport.update({
+  id: '/ia',
+  path: '/ia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClinicasRoute = ClinicasRouteImport.update({
+  id: '/clinicas',
+  path: '/clinicas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcademiasRoute = AcademiasRouteImport.update({
+  id: '/academias',
+  path: '/academias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +43,72 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/academias': typeof AcademiasRoute
+  '/clinicas': typeof ClinicasRoute
+  '/ia': typeof IaRoute
+  '/noticias': typeof NoticiasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/academias': typeof AcademiasRoute
+  '/clinicas': typeof ClinicasRoute
+  '/ia': typeof IaRoute
+  '/noticias': typeof NoticiasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/academias': typeof AcademiasRoute
+  '/clinicas': typeof ClinicasRoute
+  '/ia': typeof IaRoute
+  '/noticias': typeof NoticiasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/academias' | '/clinicas' | '/ia' | '/noticias'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/academias' | '/clinicas' | '/ia' | '/noticias'
+  id: '__root__' | '/' | '/academias' | '/clinicas' | '/ia' | '/noticias'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcademiasRoute: typeof AcademiasRoute
+  ClinicasRoute: typeof ClinicasRoute
+  IaRoute: typeof IaRoute
+  NoticiasRoute: typeof NoticiasRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/noticias': {
+      id: '/noticias'
+      path: '/noticias'
+      fullPath: '/noticias'
+      preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ia': {
+      id: '/ia'
+      path: '/ia'
+      fullPath: '/ia'
+      preLoaderRoute: typeof IaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clinicas': {
+      id: '/clinicas'
+      path: '/clinicas'
+      fullPath: '/clinicas'
+      preLoaderRoute: typeof ClinicasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/academias': {
+      id: '/academias'
+      path: '/academias'
+      fullPath: '/academias'
+      preLoaderRoute: typeof AcademiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +121,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcademiasRoute: AcademiasRoute,
+  ClinicasRoute: ClinicasRoute,
+  IaRoute: IaRoute,
+  NoticiasRoute: NoticiasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
