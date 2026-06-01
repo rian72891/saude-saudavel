@@ -14,7 +14,219 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clinics: {
+        Row: {
+          address: string
+          clinic_type: string
+          created_at: string
+          emoji: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          phone: string | null
+          specialty: string | null
+        }
+        Insert: {
+          address: string
+          clinic_type?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          phone?: string | null
+          specialty?: string | null
+        }
+        Update: {
+          address?: string
+          clinic_type?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          phone?: string | null
+          specialty?: string | null
+        }
+        Relationships: []
+      }
+      gyms: {
+        Row: {
+          address: string
+          created_at: string
+          emoji: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          price_range: string
+          rating: number
+          specialty: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          price_range?: string
+          rating?: number
+          specialty?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          price_range?: string
+          rating?: number
+          specialty?: string | null
+        }
+        Relationships: []
+      }
+      news: {
+        Row: {
+          body: string | null
+          category: string
+          emoji: string
+          gradient: string
+          id: string
+          published_at: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          category: string
+          emoji?: string
+          gradient?: string
+          id?: string
+          published_at?: string
+          summary: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          category?: string
+          emoji?: string
+          gradient?: string
+          id?: string
+          published_at?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          city: string | null
+          created_at: string
+          full_name: string
+          height_cm: number | null
+          level: number
+          updated_at: string
+          user_id: string
+          weekly_goal_cal: number
+          weight_kg: number | null
+        }
+        Insert: {
+          age?: number | null
+          city?: string | null
+          created_at?: string
+          full_name?: string
+          height_cm?: number | null
+          level?: number
+          updated_at?: string
+          user_id: string
+          weekly_goal_cal?: number
+          weight_kg?: number | null
+        }
+        Update: {
+          age?: number | null
+          city?: string | null
+          created_at?: string
+          full_name?: string
+          height_cm?: number | null
+          level?: number
+          updated_at?: string
+          user_id?: string
+          weekly_goal_cal?: number
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      screenings: {
+        Row: {
+          created_at: string
+          diet_level: number
+          exercise_level: number
+          family_history: number
+          id: string
+          risk_level: string
+          score: number
+          sleep_level: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          diet_level: number
+          exercise_level: number
+          family_history: number
+          id?: string
+          risk_level: string
+          score: number
+          sleep_level: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          diet_level?: number
+          exercise_level?: number
+          family_history?: number
+          id?: string
+          risk_level?: string
+          score?: number
+          sleep_level?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_logs: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          log_date: string
+          user_id: string
+          workout_type: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          log_date?: string
+          user_id: string
+          workout_type: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          log_date?: string
+          user_id?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
