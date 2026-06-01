@@ -1,12 +1,13 @@
 import { Link, useLocation } from "@tanstack/react-router";
 
-const links = [
+type NavLink = { to: string; label: string; sub: string | null; isAi?: boolean };
+const links: NavLink[] = [
   { to: "/", label: "Home", sub: null },
   { to: "/noticias", label: "Notícias", sub: null },
   { to: "/academias", label: "Academias", sub: "Perto" },
   { to: "/clinicas", label: "Clínicas", sub: "Perto" },
   { to: "/ia", label: "IA Saúde", sub: "Plus", isAi: true },
-] as const;
+];
 
 export function Navbar() {
   const { pathname } = useLocation();
