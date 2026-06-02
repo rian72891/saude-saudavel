@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getDashboardData, toggleWorkoutLog, submitScreening } from "@/lib/dashboard.functions";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { WeeklyProgressChart } from "@/components/dashboard/WeeklyProgressChart";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -62,7 +63,12 @@ function DashboardPage() {
     <section className="px-4 sm:px-8 py-7 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <SectionHeader title={`Olá, ${data?.profile?.full_name || "amigo(a)"} 👋`} subtitle="Sua dashboard pessoal de saúde." />
-        <button onClick={logout} className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">Sair</button>
+        <div className="flex items-center gap-2">
+          <Link to="/perfil" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">
+            👤 Meu perfil
+          </Link>
+          <button onClick={logout} className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">Sair</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -95,6 +101,8 @@ function DashboardPage() {
           })}
         </div>
       </div>
+
+      <WeeklyProgressChart />
 
       <ScreeningForm initial={data?.latestScreening} />
 
