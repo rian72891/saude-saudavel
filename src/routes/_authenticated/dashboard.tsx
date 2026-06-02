@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getDashboardData, toggleWorkoutLog, submitScreening } from "@/lib/dashboard.functions";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { WeeklyProgressChart } from "@/components/dashboard/WeeklyProgressChart";
+import { HealthMonitoringCharts } from "@/components/dashboard/HealthMonitoringCharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -101,7 +101,7 @@ function DashboardPage() {
         </div>
       </div>
 
-      <WeeklyProgressChart />
+      <HealthMonitoringCharts />
 
       <ScreeningForm initial={data?.latestScreening} />
 
