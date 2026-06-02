@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -61,6 +61,7 @@ function AuthPage() {
   const onGoogle = async () => {
     setBusy(true);
     try {
+      const { lovable } = await import("@/integrations/lovable");
       const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
       if (res.error) throw res.error;
     } catch (err) {
