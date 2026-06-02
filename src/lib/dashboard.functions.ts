@@ -9,11 +9,12 @@ export const getDashboardData = createServerFn({ method: "GET" })
     const today = new Date().toISOString().slice(0, 10);
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
-    const [profileRes, todayLogsRes, weekLogsRes, latestScreeningRes] = await Promise.all([
+    const [profileRes, todayLogsRes, weekLogsRes, latestScreeningRes, healthLogsRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("workout_logs").select("*").eq("user_id", userId).eq("log_date", today),
       supabase.from("workout_logs").select("*").eq("user_id", userId).gte("log_date", sevenDaysAgo),
       supabase.from("screenings").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("health_logs").select("*").eq("user_id", userId).gte("log_date", sevenDaysAgo).order("log_date", { ascending: true }),
     ]);
 
     return {
@@ -21,6 +22,7 @@ export const getDashboardData = createServerFn({ method: "GET" })
       todayLogs: todayLogsRes.data ?? [],
       weekLogs: weekLogsRes.data ?? [],
       latestScreening: latestScreeningRes.data,
+      healthLogs: healthLogsRes.data ?? [],
     };
   });
 

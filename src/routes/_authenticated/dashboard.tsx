@@ -101,7 +101,15 @@ function DashboardPage() {
         </div>
       </div>
 
-      <HealthMonitoringCharts />
+      <HealthMonitoringCharts 
+        data={(data?.healthLogs ?? []).map(l => ({
+          log_date: l.log_date,
+          glucose_mg_dl: l.glucose_mg_dl ? Number(l.glucose_mg_dl) : null,
+          total_calories: l.total_calories,
+          meals: l.meals
+        }))} 
+        weeklyGoal={data?.profile?.weekly_goal_cal}
+      />
 
       <ScreeningForm initial={data?.latestScreening} />
 
