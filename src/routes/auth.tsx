@@ -61,6 +61,7 @@ function AuthPage() {
   const onGoogle = async () => {
     setBusy(true);
     try {
+      const { lovable } = await import("@/integrations/lovable");
       const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
       if (res.error) throw res.error;
     } catch (err) {
