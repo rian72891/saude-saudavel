@@ -17,34 +17,48 @@ interface Props {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  proteina: "#001F3F", // Massa/Proteína
-  carboidrato: "#F39C12", // Carbs
-  gordura: "#E74C3C", // Calorias/Gordura
-  vegetal: "#2ECC71", // Weekly/Vegetal
-  fruta: "#3498DB", // Meta/Fruta
+  proteina: "#001F3F",
+  carboidrato: "#F39C12",
+  gordura: "#E74C3C",
+  vegetal: "#2ECC71",
+  fruta: "#3498DB",
   doce: "#9B59B6",
   bebida: "#1ABC9C",
 };
 
 const WEEK_DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+// Dados de exemplo caso o usuário não tenha registros
+const MOCK_DATA = [
+  { log_date: "2026-05-26", glucose_mg_dl: 14, total_calories: 500, meals: [{category: 'proteina', calories: 500}] },
+  { log_date: "2026-05-27", glucose_mg_dl: 17, total_calories: 800, meals: [{category: 'carboidrato', calories: 800}] },
+  { log_date: "2026-05-28", glucose_mg_dl: 13, total_calories: 1100, meals: [{category: 'gordura', calories: 1100}] },
+  { log_date: "2026-05-29", glucose_mg_dl: 20, total_calories: 1600, meals: [{category: 'vegetal', calories: 1600}] },
+  { log_date: "2026-05-30", glucose_mg_dl: 16, total_calories: 1900, meals: [{category: 'fruta', calories: 1900}] },
+  { log_date: "2026-05-31", glucose_mg_dl: 12, total_calories: 2100, meals: [{category: 'doce', calories: 2100}] },
+  { log_date: "2026-06-01", glucose_mg_dl: 10, total_calories: 2500, meals: [{category: 'bebida', calories: 2500}] },
+];
+
 export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
+  const hasRealData = data && data.length > 0 && data.some(d => d.total_calories > 0 || d.glucose_mg_dl !== null);
+  const activeData = hasRealData ? data : MOCK_DATA;
+
   // Processamento para Glicose vs Alimentação (Line Chart)
   const glucoseData = useMemo(() => {
-    return data.map(log => {
+    return activeData.map(log => {
       const date = new Date(log.log_date + 'T00:00:00');
       return {
         name: WEEK_DAYS[date.getDay()],
         glicose: log.glucose_mg_dl,
-        alimentacao: log.total_calories / 100, // Escalonado para o gráfico
+        alimentacao: log.total_calories / 100,
         realCalories: log.total_calories
       };
     });
-  }, [data]);
+  }, [activeData]);
 
   // Processamento para Calorias por Alimento (Stacked Bar Chart)
   const caloriesData = useMemo(() => {
-    return data.map(log => {
+    return activeData.map(log => {
       const date = new Date(log.log_date + 'T00:00:00');
       const meals = Array.isArray(log.meals) ? log.meals : [];
       
@@ -59,14 +73,14 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
 
       return row;
     });
-  }, [data]);
+  }, [activeData]);
 
   // Processamento para Composição da Dieta (Pie Chart)
   const dietData = useMemo(() => {
     const totals: Record<string, number> = {};
     let grandTotal = 0;
 
-    data.forEach(log => {
+    activeData.forEach(log => {
       const meals = Array.isArray(log.meals) ? log.meals : [];
       meals.forEach((m: any) => {
         const cat = m.category || 'outros';
@@ -83,32 +97,34 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
       calories: value,
       color: CATEGORY_COLORS[name] || "#BDC3C7"
     }));
-  }, [data]);
+  }, [activeData]);
 
   const totalCaloriesWeek = useMemo(() => {
-    return data.reduce((acc, curr) => acc + curr.total_calories, 0);
-  }, [data]);
-
-  if (data.length === 0) {
-    return (
-      <div className="rounded-xl bg-white shadow-[var(--shadow-card)] p-10 text-center">
-        <span className="text-4xl block mb-4">📈</span>
-        <h2 className="text-navy font-bold text-lg">Sem dados de saúde esta semana</h2>
-        <p className="text-sm text-muted-foreground mt-2">Comece a registrar sua alimentação e glicose para ver o monitoramento.</p>
-      </div>
-    );
-  }
+    return activeData.reduce((acc, curr) => acc + curr.total_calories, 0);
+  }, [activeData]);
 
   return (
-    <div className="rounded-xl bg-white shadow-[var(--shadow-card)] p-6 space-y-8">
+    <div className="rounded-xl bg-white shadow-[var(--shadow-card)] p-6 space-y-8 relative overflow-hidden">
+      {!hasRealData && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className="bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
+            DADOS DE EXEMPLO
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-2xl">📊</span>
           <h2 className="text-navy font-bold text-lg">Monitorar a Saúde</h2>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tempo Real</div>
-          <a href="/monitor" className="text-[10px] bg-green/10 text-green-dark px-2 py-1 rounded hover:bg-green/20 transition-colors font-bold">ATUALIZAR DADOS</a>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            {hasRealData ? 'Tempo Real' : 'Demonstração'}
+          </div>
+          <a href="/monitor" className="text-[10px] bg-green text-white px-2 py-1 rounded hover:bg-green-dark transition-colors font-bold shadow-sm">
+            {hasRealData ? 'ATUALIZAR' : 'COMEÇAR AGORA'}
+          </a>
         </div>
       </div>
 
@@ -150,9 +166,9 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
               />
             </LineChart>
           </ResponsiveContainer>
-          {data.length > 0 && data[data.length-1].total_calories > 0 && (
+          {activeData.length > 0 && activeData[activeData.length-1].total_calories > 0 && (
             <div className="absolute top-2 right-4 bg-[#001F3F] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm animate-pulse">
-              {data[data.length-1].total_calories} kcal hoje
+              {activeData[activeData.length-1].total_calories} kcal hoje
             </div>
           )}
         </div>
@@ -176,7 +192,7 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
           </ResponsiveContainer>
         </div>
         <p className="text-center text-[10px] text-slate-500 mt-2 font-medium">
-          ■ {totalCaloriesWeek} Calorias consumidas nos últimos 7 dias
+          ■ {totalCaloriesWeek} Calorias consumidas no período
         </p>
       </div>
 
