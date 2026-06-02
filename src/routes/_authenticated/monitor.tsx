@@ -155,7 +155,7 @@ function MonitorPage() {
                     <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name] ?? "oklch(0.6 0.05 240)"} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => `${v} kcal`} contentStyle={{ borderRadius: 10, border: "1px solid oklch(0.91 0.014 245)", fontSize: 12 }} />
+                <Tooltip formatter={((v: unknown) => `${v} kcal`) as never} contentStyle={{ borderRadius: 10, border: "1px solid oklch(0.91 0.014 245)", fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
