@@ -92,6 +92,42 @@ export type Database = {
         }
         Relationships: []
       }
+      health_logs: {
+        Row: {
+          ai_insight: string | null
+          created_at: string
+          glucose_mg_dl: number | null
+          id: string
+          log_date: string
+          meals: Json
+          total_calories: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_insight?: string | null
+          created_at?: string
+          glucose_mg_dl?: number | null
+          id?: string
+          log_date?: string
+          meals?: Json
+          total_calories?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_insight?: string | null
+          created_at?: string
+          glucose_mg_dl?: number | null
+          id?: string
+          log_date?: string
+          meals?: Json
+          total_calories?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           body: string | null
