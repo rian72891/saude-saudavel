@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { useAuth } from "@/lib/useAuth";
 
 type NavLink = { to: string; label: string; sub: string | null; isAi?: boolean };
 const links: NavLink[] = [
@@ -11,6 +12,7 @@ const links: NavLink[] = [
 
 export function Navbar() {
   const { pathname } = useLocation();
+  const { user } = useAuth();
 
   return (
     <nav className="fixed top-0 inset-x-0 z-50 h-[68px] bg-navy shadow-[0_2px_20px_rgba(0,0,0,0.25)] flex items-center px-4 sm:px-8 overflow-x-auto">
@@ -59,6 +61,13 @@ export function Navbar() {
           );
         })}
       </div>
+
+      <Link
+        to={user ? "/dashboard" : "/auth"}
+        className="ml-2 shrink-0 px-3 sm:px-4 py-2 rounded-lg bg-green hover:bg-green-dark text-white text-[12.5px] font-bold uppercase tracking-wider"
+      >
+        {user ? "Dashboard" : "Entrar"}
+      </Link>
     </nav>
   );
 }
