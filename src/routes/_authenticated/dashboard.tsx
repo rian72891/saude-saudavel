@@ -76,6 +76,16 @@ function DashboardPage() {
         <StatCard label="Última triagem" value={data?.latestScreening?.risk_level ?? "—"} hint={data?.latestScreening ? `Score ${data.latestScreening.score}` : "Faça abaixo"} />
       </div>
 
+      <HealthMonitoringCharts 
+        data={(data?.healthLogs ?? []).map(l => ({
+          log_date: l.log_date,
+          glucose_mg_dl: l.glucose_mg_dl ? Number(l.glucose_mg_dl) : null,
+          total_calories: l.total_calories,
+          meals: l.meals
+        }))} 
+        weeklyGoal={data?.profile?.weekly_goal_cal}
+      />
+
       <div className="rounded-xl bg-white shadow-[var(--shadow-card)] p-6">
         <h2 className="text-navy font-bold text-lg">✅ Treinos de hoje</h2>
         <p className="text-sm text-muted-foreground mt-1">Marque o que você completou.</p>
@@ -100,16 +110,6 @@ function DashboardPage() {
           })}
         </div>
       </div>
-
-      <HealthMonitoringCharts 
-        data={(data?.healthLogs ?? []).map(l => ({
-          log_date: l.log_date,
-          glucose_mg_dl: l.glucose_mg_dl ? Number(l.glucose_mg_dl) : null,
-          total_calories: l.total_calories,
-          meals: l.meals
-        }))} 
-        weeklyGoal={data?.profile?.weekly_goal_cal}
-      />
 
       <ScreeningForm initial={data?.latestScreening} />
 
