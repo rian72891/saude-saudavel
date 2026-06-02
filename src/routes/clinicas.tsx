@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { LocationMap, type MapMarker } from "@/components/maps/LocationMap";
-import { useGeolocation } from "@/lib/useGeolocation";
+import { DEFAULT_CENTER, useGeolocation } from "@/lib/useGeolocation";
 import { distanceKm } from "@/lib/distance";
 
 export const Route = createFileRoute("/clinicas")({
@@ -22,15 +22,18 @@ type Clinic = {
   clinic_type: string; specialty: string | null; phone: string | null; emoji: string;
 };
 
+const RADIUS_OPTIONS = [5, 10, 25, 50, 0] as const;
+
 function ClinicasPage() {
-  const { coords } = useGeolocation();
+  const { coords, accuracy, status, error, retry } = useGeolocation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [radius, setRadius] = useState<number>(25);
 
   const { data: clinics = [], isLoading } = useQuery({
     queryKey: ["clinics"],
     queryFn: async (): Promise<Clinic[]> => {
-      const { data, error } = await supabase.from("clinics").select("*");
-      if (error) throw error;
+      const { data, error: err } = await supabase.from("clinics").select("*");
+      if (err) throw err;
       return (data ?? []).map((c) => ({ ...c, lat: Number(c.lat), lng: Number(c.lng) }));
     },
   });
@@ -40,19 +43,47 @@ function ClinicasPage() {
     [clinics, coords]
   );
 
-  const markers: MapMarker[] = sorted.map((c) => ({
+  const filtered = useMemo(
+    () => (radius === 0 ? sorted : sorted.filter((c) => c.distance <= radius)),
+    [sorted, radius]
+  );
+
+  const markers: MapMarker[] = filtered.map((c) => ({
     id: c.id, lat: c.lat, lng: c.lng, title: c.name, emoji: c.emoji,
-    variant: "green", description: c.address,
+    variant: "green", description: `${c.address} • ${c.distance.toFixed(1)} km`,
   }));
 
   return (
     <section className="px-4 sm:px-8 py-7">
       <SectionHeader title="🏥 Clínicas e Postos de Saúde" subtitle="Unidades de saúde próximas à sua localização." />
+      <GeoStatusBanner status={status} error={error} accuracy={accuracy} onRetry={retry} nearestKm={sorted[0]?.distance} />
+
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+        <span className="text-xs font-semibold text-navy/70 uppercase tracking-wider">Raio:</span>
+        {RADIUS_OPTIONS.map((r) => (
+          <button
+            key={r}
+            onClick={() => setRadius(r)}
+            className={[
+              "px-3 py-1.5 rounded-full text-xs font-semibold border transition",
+              radius === r ? "bg-navy text-white border-navy" : "bg-white text-navy border-border hover:border-navy/40",
+            ].join(" ")}
+          >
+            {r === 0 ? "Todas" : `${r} km`}
+          </button>
+        ))}
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} de {sorted.length} resultados</span>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start mt-4">
         <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
           {isLoading && <div className="text-muted-foreground text-sm">Carregando...</div>}
-          {sorted.map((c) => (
+          {!isLoading && filtered.length === 0 && (
+            <div className="text-sm text-muted-foreground bg-white p-4 rounded-lg shadow-[var(--shadow-soft)]">
+              Nenhuma unidade neste raio. Tente ampliar o filtro acima.
+            </div>
+          )}
+          {filtered.map((c) => (
             <button
               key={c.id}
               type="button"
@@ -80,9 +111,38 @@ function ClinicasPage() {
             markers={markers}
             selectedId={selectedId}
             onMarkerClick={setSelectedId}
+            accuracy={accuracy}
           />
         </div>
       </div>
     </section>
+  );
+}
+
+function GeoStatusBanner({
+  status, error, accuracy, onRetry, nearestKm,
+}: { status: string; error: string | null; accuracy: number | null; onRetry: () => void; nearestKm?: number }) {
+  if (status === "granted") {
+    return (
+      <div className="mt-3 text-xs px-3 py-2 rounded-md bg-green-light border border-green/30 text-green-dark flex items-center gap-2 flex-wrap">
+        <span>✅ Localização ativa</span>
+        {accuracy !== null && <span className="opacity-70">• precisão ~{Math.round(accuracy)}m</span>}
+        {nearestKm !== undefined && <span className="opacity-70">• mais próximo: {nearestKm.toFixed(1)} km</span>}
+        <button onClick={onRetry} className="ml-auto underline hover:opacity-80">Atualizar</button>
+      </div>
+    );
+  }
+  const msg =
+    status === "loading" ? "📡 Solicitando sua localização..." :
+    status === "denied" ? "🚫 Permissão de localização negada. Mostrando o centro padrão (Av. Paulista, SP)." :
+    status === "unsupported" ? "Geolocalização não suportada neste navegador." :
+    status === "error" ? `⚠️ Não foi possível obter sua localização${error ? `: ${error}` : "."}` : "";
+  if (!msg) return null;
+  return (
+    <div className="mt-3 text-xs px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-2 flex-wrap">
+      <span>{msg}</span>
+      <span className="opacity-70">Padrão: {DEFAULT_CENTER.lat.toFixed(4)}, {DEFAULT_CENTER.lng.toFixed(4)}</span>
+      <button onClick={onRetry} className="ml-auto underline hover:opacity-80 font-semibold">Tentar novamente</button>
+    </div>
   );
 }
