@@ -26,7 +26,8 @@ export function WeeklyProgressChart() {
               <Tooltip
                 cursor={{ fill: "oklch(0.95 0.01 240)" }}
                 contentStyle={{ borderRadius: 10, border: "1px solid oklch(0.91 0.014 245)", fontSize: 12 }}
-                formatter={(v: number, _n, p) => [`${v} treino(s) • ${p?.payload?.calories ?? 0} kcal`, "Concluídos"]}
+                formatter={((v: unknown, _n: unknown, p: { payload?: { calories?: number } }) =>
+                  [`${v} treino(s) • ${p?.payload?.calories ?? 0} kcal`, "Concluídos"]) as never}
                 labelFormatter={(l) => `Dia: ${l}`}
               />
               <Bar dataKey="count" fill="oklch(0.72 0.17 162)" radius={[8, 8, 0, 0]} maxBarSize={42} />
