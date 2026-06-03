@@ -81,7 +81,14 @@ export function LocationMap({
       map.on("zoomstart", () => setCenteredOnUser(false));
 
       mapRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
+      
+      // Fix para garantir que o mapa carregue os tiles corretamente
+      setTimeout(() => {
+        if (!cancelled) {
+          map.invalidateSize();
+          map.setView([center.lat, center.lng], 13);
+        }
+      }, 250);
     })();
 
     return () => {
