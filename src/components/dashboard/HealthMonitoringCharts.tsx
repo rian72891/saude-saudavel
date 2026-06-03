@@ -140,8 +140,8 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
               <Tooltip 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 cursor={{ stroke: '#e2e8f0' }}
-                formatter={(value: any, name: string) => {
-                  if (name === "Alimentação") return [`${(value * 100).toFixed(0)} kcal`, name];
+                formatter={(value: any, name: any) => {
+                  if (name === "Alimentação") return [`${(Number(value) * 100).toFixed(0)} kcal`, name];
                   return [value, name];
                 }}
               />
