@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Coords } from "@/lib/useGeolocation";
 
 export type MapMarker = {
@@ -17,17 +17,19 @@ type Props = {
   selectedId?: string | null;
   onMarkerClick?: (id: string) => void;
   showUserLocation?: boolean;
-  /** Quando true, ajusta o zoom para mostrar usuário + marcadores mais próximos. */
   autoFit?: boolean;
-  /** Raio de precisão (em metros) para desenhar círculo ao redor do usuário. */
   accuracy?: number | null;
+  /** Habilita o botão flutuante "Minha localização" estilo Google Maps. */
+  showLocateButton?: boolean;
+  /** Chamado quando o usuário clica no botão "Minha localização". */
+  onLocateClick?: () => void;
 };
 
 /**
- * Mapa real com Leaflet + OpenStreetMap.
- * - Renderização exclusivamente no cliente (Leaflet usa `window`).
- * - Cleanup completo no unmount para evitar memory leaks.
- * - Recentra automaticamente quando o usuário se move, mas respeita seleção manual.
+ * Mapa real com Leaflet + OpenStreetMap, com UX inspirada no Google Maps:
+ * - Ponto azul pulsante (blue dot) para a posição do usuário
+ * - Pop-up com botão "Como Chegar" que abre rotas no Google Maps
+ * - Botão flutuante de recentralizar com animação flyTo suave
  */
 export function LocationMap({
   center,
@@ -37,6 +39,8 @@ export function LocationMap({
   showUserLocation = true,
   autoFit = true,
   accuracy = null,
+  showLocateButton = true,
+  onLocateClick,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
@@ -45,8 +49,8 @@ export function LocationMap({
   const accuracyCircleRef = useRef<import("leaflet").Circle | null>(null);
   const didInitialFitRef = useRef(false);
   const onMarkerClickRef = useRef(onMarkerClick);
+  const [centeredOnUser, setCenteredOnUser] = useState(false);
 
-  // Mantém a ref do callback estável (evita recriar marcadores).
   useEffect(() => {
     onMarkerClickRef.current = onMarkerClick;
   }, [onMarkerClick]);
@@ -64,6 +68,7 @@ export function LocationMap({
         center: [center.lat, center.lng],
         zoom: 13,
         scrollWheelZoom: true,
+        zoomControl: true,
       });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -71,8 +76,11 @@ export function LocationMap({
         maxZoom: 19,
       }).addTo(map);
 
+      // Quando o usuário arrasta, marca como "fora da posição"
+      map.on("dragstart", () => setCenteredOnUser(false));
+      map.on("zoomstart", () => setCenteredOnUser(false));
+
       mapRef.current = map;
-      // Força recálculo do tamanho após render
       setTimeout(() => map.invalidateSize(), 100);
     })();
 
@@ -91,7 +99,7 @@ export function LocationMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Atualizar marker do usuário + círculo de precisão
+  // Atualizar marker do usuário (blue dot pulsante) + círculo de precisão
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -108,12 +116,10 @@ export function LocationMap({
         if (userMarkerRef.current) {
           userMarkerRef.current.setLatLng([center.lat, center.lng]);
         } else {
-          userMarkerRef.current = L.marker([center.lat, center.lng], { icon, zIndexOffset: 500 })
-            .bindPopup("📍 Você está aqui")
+          userMarkerRef.current = L.marker([center.lat, center.lng], { icon, zIndexOffset: 500, interactive: false })
             .addTo(mapRef.current);
         }
 
-        // Círculo de precisão (apenas se accuracy razoável)
         if (accuracy && accuracy > 0 && accuracy < 5000) {
           if (accuracyCircleRef.current) {
             accuracyCircleRef.current.setLatLng([center.lat, center.lng]);
@@ -121,8 +127,8 @@ export function LocationMap({
           } else {
             accuracyCircleRef.current = L.circle([center.lat, center.lng], {
               radius: accuracy,
-              color: "#06b6d4",
-              fillColor: "#06b6d4",
+              color: "#4285F4",
+              fillColor: "#4285F4",
               fillOpacity: 0.08,
               weight: 1,
             }).addTo(mapRef.current);
@@ -133,12 +139,10 @@ export function LocationMap({
         }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [center.lat, center.lng, showUserLocation, accuracy]);
 
-  // Auto-fit: enquadra usuário + até 5 marcadores mais próximos (uma vez por mudança grande)
+  // Auto-fit inicial
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -151,12 +155,8 @@ export function LocationMap({
         return;
       }
 
-      // 5 marcadores mais próximos do centro
       const nearest = [...markers]
-        .map((m) => ({
-          m,
-          d: Math.hypot(m.lat - center.lat, m.lng - center.lng),
-        }))
+        .map((m) => ({ m, d: Math.hypot(m.lat - center.lat, m.lng - center.lng) }))
         .sort((a, b) => a.d - b.d)
         .slice(0, 5)
         .map((x) => x.m);
@@ -169,12 +169,10 @@ export function LocationMap({
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
       didInitialFitRef.current = true;
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [center.lat, center.lng, markers, autoFit]);
 
-  // Sincronizar marcadores de POIs
+  // Marcadores de POIs com popup estilo Google Maps + "Como Chegar"
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -200,35 +198,84 @@ export function LocationMap({
           popupAnchor: [0, -28],
         });
 
+        const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mk.lat},${mk.lng}`;
+        const safeTitle = escapeHtml(mk.title);
+        const safeDesc = mk.description ? escapeHtml(mk.description) : "";
+        const popupHtml = `
+          <div class="saude-popup">
+            <h4>${mk.emoji} ${safeTitle}</h4>
+            ${safeDesc ? `<p>${safeDesc}</p>` : ""}
+            <a class="directions" href="${directionsUrl}" target="_blank" rel="noopener noreferrer">
+              🧭 Como Chegar
+            </a>
+          </div>
+        `;
+
         const existing = markerRefs.current.get(mk.id);
         if (existing) {
           existing.setLatLng([mk.lat, mk.lng]);
           existing.setIcon(icon);
+          existing.setPopupContent(popupHtml);
         } else {
           const marker = L.marker([mk.lat, mk.lng], { icon })
-            .bindPopup(
-              `<strong>${mk.title}</strong>${mk.description ? `<br/><span style="color:#64748b;font-size:12px">${mk.description}</span>` : ""}`
-            )
+            .bindPopup(popupHtml, { closeButton: true, autoPan: true })
             .addTo(map);
           marker.on("click", () => onMarkerClickRef.current?.(mk.id));
           markerRefs.current.set(mk.id, marker);
         }
       });
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [markers]);
 
-  // Centralizar marcador selecionado
+  // Centralizar marcador selecionado (smooth flyTo)
   useEffect(() => {
     if (!selectedId || !mapRef.current) return;
     const marker = markerRefs.current.get(selectedId);
     if (marker) {
-      mapRef.current.setView(marker.getLatLng(), 16, { animate: true });
+      mapRef.current.flyTo(marker.getLatLng(), 16, { animate: true, duration: 0.8 });
       marker.openPopup();
+      setCenteredOnUser(false);
     }
   }, [selectedId]);
 
-  return <div ref={containerRef} className="w-full h-full min-h-[480px] rounded-lg overflow-hidden" />;
+  const handleLocate = () => {
+    onLocateClick?.();
+    if (!mapRef.current) return;
+    mapRef.current.flyTo([center.lat, center.lng], 16, { animate: true, duration: 1 });
+    setCenteredOnUser(true);
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full min-h-[480px] rounded-lg overflow-hidden" />
+      {showLocateButton && (
+        <button
+          type="button"
+          onClick={handleLocate}
+          aria-label="Minha localização"
+          title="Minha localização"
+          className={`gmaps-locate-btn ${centeredOnUser ? "active" : ""}`}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <circle cx="12" cy="12" r="9" />
+            <line x1="12" y1="1" x2="12" y2="4" />
+            <line x1="12" y1="20" x2="12" y2="23" />
+            <line x1="1" y1="12" x2="4" y2="12" />
+            <line x1="20" y1="12" x2="23" y2="12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }

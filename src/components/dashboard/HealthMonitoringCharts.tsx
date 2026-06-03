@@ -140,8 +140,8 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
               <Tooltip 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 cursor={{ stroke: '#e2e8f0' }}
-                formatter={(value: any, name: string) => {
-                  if (name === "Alimentação") return [`${(value * 100).toFixed(0)} kcal`, name];
+                formatter={(value: any, name: any) => {
+                  if (name === "Alimentação") return [`${(Number(value) * 100).toFixed(0)} kcal`, name];
                   return [value, name];
                 }}
               />
@@ -184,7 +184,7 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
               <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
               <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-              <Legend verticalAlign="right" layout="vertical" align="right" iconType="square" wrapperStyle={{fontSize: '10px'}} />
+              <Legend verticalAlign="top" layout="vertical" align="right" iconType="square" wrapperStyle={{fontSize: '10px'}} />
               {Object.keys(CATEGORY_COLORS).map(cat => (
                 <Bar key={cat} dataKey={cat} stackId="a" fill={CATEGORY_COLORS[cat]} name={cat.charAt(0).toUpperCase() + cat.slice(1)} barSize={30} radius={[2, 2, 0, 0]} />
               ))}
