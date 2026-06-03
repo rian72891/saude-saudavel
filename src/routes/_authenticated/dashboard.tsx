@@ -41,8 +41,25 @@ function DashboardPage() {
   const toggle = useMutation({
     mutationFn: (vars: { workoutType: string; completed: boolean }) =>
       toggleFn({ data: { workoutType: vars.workoutType, completed: vars.completed, date: new Date().toISOString().slice(0, 10) } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Falha ao salvar"),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: ["dashboard"] });
+      const prev = qc.getQueryData<any>(["dashboard"]);
+      qc.setQueryData<any>(["dashboard"], (old: any) => {
+        if (!old) return old;
+        const today = new Date().toISOString().slice(0, 10);
+        const others = (old.todayLogs ?? []).filter((l: any) => l.workout_type !== vars.workoutType);
+        const todayLogs = vars.completed
+          ? [...others, { workout_type: vars.workoutType, log_date: today, completed: true }]
+          : others;
+        return { ...old, todayLogs };
+      });
+      return { prev };
+    },
+    onError: (e, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["dashboard"], ctx.prev);
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar");
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 
   const logout = async () => {
@@ -95,7 +112,7 @@ function DashboardPage() {
             return (
               <button
                 key={w.key}
-                disabled={toggle.isPending}
+                disabled={false}
                 onClick={() => toggle.mutate({ workoutType: w.key, completed: !done })}
                 className={[
                   "rounded-xl p-4 border-2 transition text-left",
