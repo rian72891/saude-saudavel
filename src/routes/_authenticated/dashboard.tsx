@@ -112,7 +112,7 @@ function DashboardPage() {
             return (
               <button
                 key={w.key}
-                disabled={toggle.isPending}
+                disabled={false}
                 onClick={() => toggle.mutate({ workoutType: w.key, completed: !done })}
                 className={[
                   "rounded-xl p-4 border-2 transition text-left",
