@@ -120,6 +120,7 @@ function ClinicasPage() {
               {c.phone && <p className="text-xs text-green-dark mt-1 font-semibold">📞 {c.phone}</p>}
             </button>
           ))}
+          <PlaceNewsPanel placeName={sorted.find((c) => c.id === selectedId)?.name ?? sorted[0]?.name ?? null} placeType="clinic" category={sorted.find((c) => c.id === selectedId)?.label} />
         </div>
 
         <div className="bg-white rounded-lg shadow-[var(--shadow-card)] overflow-hidden h-[560px]">
