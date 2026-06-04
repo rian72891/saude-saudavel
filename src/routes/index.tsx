@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   return (
     <section className="px-4 sm:px-8 py-7">
-      <SectionHeader title="Dashboard de Saúde" subtitle="Monitore seus indicadores e mantenha-se no caminho certo." />
+      <SectionHeader title="Painel de Saúde" subtitle="Monitore seus indicadores e mantenha-se no caminho certo." />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <FeatureCard
