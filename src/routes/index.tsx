@@ -4,7 +4,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Saúde + Saudável — Dashboard" },
+      { title: "Saúde + Saudável — Painel" },
       { name: "description", content: "Acompanhe seus indicadores de saúde, treinos e cuidado preventivo." },
     ],
   }),
