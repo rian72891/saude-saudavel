@@ -11,7 +11,7 @@ import { HealthMonitoringCharts } from "@/components/dashboard/HealthMonitoringC
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Minha Dashboard | Saúde + Saudável" },
+      { title: "Meu Painel | Saúde + Saudável" },
       { name: "description", content: "Acompanhe treinos, triagem e indicadores de saúde." },
     ],
   }),
