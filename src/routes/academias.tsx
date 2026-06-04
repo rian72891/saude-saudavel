@@ -102,6 +102,7 @@ function AcademiasPage() {
               {g.phone && <p className="text-xs text-green-dark mt-1 font-semibold">📞 {g.phone}</p>}
             </button>
           ))}
+          <PlaceNewsPanel placeName={sorted.find((g) => g.id === selectedId)?.name ?? sorted[0]?.name ?? null} placeType="gym" />
         </div>
 
         <div className="bg-white rounded-lg shadow-[var(--shadow-card)] overflow-hidden h-[560px]">
