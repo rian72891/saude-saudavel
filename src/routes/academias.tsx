@@ -6,6 +6,7 @@ import { LocationMap, type MapMarker } from "@/components/maps/LocationMap";
 import { DEFAULT_CENTER, useGeolocation } from "@/lib/useGeolocation";
 import { distanceKm } from "@/lib/distance";
 import { searchNearbyPlaces } from "@/lib/places.functions";
+import { PlaceNewsPanel } from "@/components/places/PlaceNewsPanel";
 
 export const Route = createFileRoute("/academias")({
   head: () => ({
