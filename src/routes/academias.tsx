@@ -6,6 +6,7 @@ import { LocationMap, type MapMarker } from "@/components/maps/LocationMap";
 import { DEFAULT_CENTER, useGeolocation } from "@/lib/useGeolocation";
 import { distanceKm } from "@/lib/distance";
 import { searchNearbyPlaces } from "@/lib/places.functions";
+import { PlaceNewsPanel } from "@/components/places/PlaceNewsPanel";
 
 export const Route = createFileRoute("/academias")({
   head: () => ({
@@ -101,6 +102,7 @@ function AcademiasPage() {
               {g.phone && <p className="text-xs text-green-dark mt-1 font-semibold">📞 {g.phone}</p>}
             </button>
           ))}
+          <PlaceNewsPanel placeName={sorted.find((g) => g.id === selectedId)?.name ?? sorted[0]?.name ?? null} placeType="gym" />
         </div>
 
         <div className="bg-white rounded-lg shadow-[var(--shadow-card)] overflow-hidden h-[560px]">

@@ -4,7 +4,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Saúde + Saudável — Dashboard" },
+      { title: "Saúde + Saudável — Painel" },
       { name: "description", content: "Acompanhe seus indicadores de saúde, treinos e cuidado preventivo." },
     ],
   }),
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   return (
     <section className="px-4 sm:px-8 py-7">
-      <SectionHeader title="Dashboard de Saúde" subtitle="Monitore seus indicadores e mantenha-se no caminho certo." />
+      <SectionHeader title="Painel de Saúde" subtitle="Monitore seus indicadores e mantenha-se no caminho certo." />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <FeatureCard

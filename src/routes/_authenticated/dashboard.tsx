@@ -11,7 +11,7 @@ import { HealthMonitoringCharts } from "@/components/dashboard/HealthMonitoringC
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Minha Dashboard | Saúde + Saudável" },
+      { title: "Meu Painel | Saúde + Saudável" },
       { name: "description", content: "Acompanhe treinos, triagem e indicadores de saúde." },
     ],
   }),
@@ -79,7 +79,7 @@ function DashboardPage() {
   return (
     <section className="px-4 sm:px-8 py-7 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader title={`Olá, ${data?.profile?.full_name || "amigo(a)"} 👋`} subtitle="Sua dashboard pessoal de saúde." />
+        <SectionHeader title={`Olá, ${data?.profile?.full_name || "amigo(a)"} 👋`} subtitle="Seu painel pessoal de saúde." />
         <div className="flex items-center gap-2 flex-wrap">
           <Link to="/monitor" className="text-sm px-4 py-2 rounded-lg bg-green text-white hover:bg-green-dark font-medium">📊 Monitorar</Link>
           <Link to="/perfil" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">👤 Meu perfil</Link>

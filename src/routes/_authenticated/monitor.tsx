@@ -123,7 +123,7 @@ function MonitorPage() {
     <section className="px-4 sm:px-8 py-7 space-y-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <SectionHeader title="📊 Monitorar a Saúde" subtitle="Glicose, calorias e refeições — com cálculo automático por IA." />
-        <Link to="/dashboard" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">← Dashboard</Link>
+        <Link to="/dashboard" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">← Painel</Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

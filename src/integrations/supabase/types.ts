@@ -100,9 +100,14 @@ export type Database = {
           id: string
           log_date: string
           meals: Json
+          mood: number | null
+          sleep_hours: number | null
+          steps: number
           total_calories: number
           updated_at: string
           user_id: string
+          water_ml: number
+          weight_kg: number | null
         }
         Insert: {
           ai_insight?: string | null
@@ -111,9 +116,14 @@ export type Database = {
           id?: string
           log_date?: string
           meals?: Json
+          mood?: number | null
+          sleep_hours?: number | null
+          steps?: number
           total_calories?: number
           updated_at?: string
           user_id: string
+          water_ml?: number
+          weight_kg?: number | null
         }
         Update: {
           ai_insight?: string | null
@@ -122,9 +132,14 @@ export type Database = {
           id?: string
           log_date?: string
           meals?: Json
+          mood?: number | null
+          sleep_hours?: number | null
+          steps?: number
           total_calories?: number
           updated_at?: string
           user_id?: string
+          water_ml?: number
+          weight_kg?: number | null
         }
         Relationships: []
       }

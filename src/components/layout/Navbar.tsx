@@ -66,7 +66,7 @@ export function Navbar() {
         to={user ? "/dashboard" : "/auth"}
         className="ml-2 shrink-0 px-3 sm:px-4 py-2 rounded-lg bg-green hover:bg-green-dark text-white text-[12.5px] font-bold uppercase tracking-wider"
       >
-        {user ? "Dashboard" : "Entrar"}
+        {user ? "Painel" : "Entrar"}
       </Link>
     </nav>
   );
