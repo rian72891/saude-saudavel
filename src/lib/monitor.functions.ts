@@ -116,7 +116,7 @@ export const upsertHealthLog = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabase
       .from("health_logs")
-      .upsert(payload, { onConflict: "user_id,log_date" })
+      .upsert(payload as never, { onConflict: "user_id,log_date" })
       .select()
       .single();
     if (error) throw new Error(error.message);
