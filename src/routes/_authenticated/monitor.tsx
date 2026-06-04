@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import {
   estimateFoodCalories, generateHealthInsight, getHealthMonitor, upsertHealthLog,
+  quickAIAnalysis, computeDailyTargets,
   type Meal,
 } from "@/lib/monitor.functions";
 import { SectionHeader } from "@/components/ui/SectionHeader";
