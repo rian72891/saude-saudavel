@@ -82,7 +82,7 @@ function PerfilPage() {
     <section className="px-4 sm:px-8 py-7 space-y-6 max-w-4xl mx-auto">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <SectionHeader title="👤 Meu Perfil" subtitle="Mantenha seus dados atualizados para recomendações mais precisas." />
-        <Link to="/dashboard" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">← Dashboard</Link>
+        <Link to="/dashboard" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">← Painel</Link>
       </div>
 
       <form
