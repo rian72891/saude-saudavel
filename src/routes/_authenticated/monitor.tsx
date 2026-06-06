@@ -157,9 +157,8 @@ function MonitorPage() {
     return Object.entries(totals).map(([name, value]) => ({ name, value: Math.round(value) }));
   }, [data]);
 
-  const totalKcal = meals.reduce((s, m) => s + m.calories, 0);
-
   if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>;
+
 
   return (
     <section className="px-4 sm:px-8 py-7 space-y-6 max-w-6xl mx-auto">
