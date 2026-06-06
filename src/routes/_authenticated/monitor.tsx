@@ -54,15 +54,48 @@ function MonitorPage() {
   const [foodInput, setFoodInput] = useState("");
   const [insight, setInsight] = useState<string | null>(null);
 
+  // Vitais em tempo real
+  const [waterMl, setWaterMl] = useState<number>(0);
+  const [sleepH, setSleepH] = useState<string>("");
+  const [stepsCount, setStepsCount] = useState<string>("");
+  const [weightKg, setWeightKg] = useState<string>("");
+  const [mood, setMood] = useState<number | null>(null);
+
   // Hidrata estado quando carrega registro existente do dia
   useMemo(() => {
     if (todayLog) {
       setGlucose(todayLog.glucose_mg_dl?.toString() ?? "");
       setMeals((todayLog.meals as Meal[]) ?? []);
       setInsight(todayLog.ai_insight ?? null);
+      setWaterMl(todayLog.water_ml ?? 0);
+      setSleepH(todayLog.sleep_hours?.toString() ?? "");
+      setStepsCount(todayLog.steps?.toString() ?? "");
+      setWeightKg(todayLog.weight_kg?.toString() ?? "");
+      setMood(todayLog.mood ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayLog?.id]);
+
+  // Metas dinâmicas (Mifflin-St Jeor simplificado, em tempo real no cliente)
+  const targets = useMemo(() => {
+    const w = Number(weightKg) || 70;
+    const bmr = 10 * w + 6.25 * 170 - 5 * 30 + 5;
+    return {
+      calories: Math.round(bmr * 1.55),
+      water_ml: Math.round(w * 35),
+      sleep_h: 8,
+      steps: 8000,
+    };
+  }, [weightKg]);
+
+  const totalKcal = meals.reduce((s, m) => s + m.calories, 0);
+  const pct = (v: number, max: number) => Math.max(0, Math.min(100, (v / max) * 100));
+  const live = {
+    kcal: pct(totalKcal, targets.calories),
+    water: pct(waterMl, targets.water_ml),
+    sleep: pct(Number(sleepH) || 0, targets.sleep_h),
+    steps: pct(Number(stepsCount) || 0, targets.steps),
+  };
 
   const estimate = useMutation({
     mutationFn: (desc: string) => estimateFn({ data: { description: desc } }),
@@ -76,7 +109,16 @@ function MonitorPage() {
 
   const save = useMutation({
     mutationFn: () => upsertFn({
-      data: { date: today, glucose_mg_dl: glucose ? Number(glucose) : null, meals },
+      data: {
+        date: today,
+        glucose_mg_dl: glucose ? Number(glucose) : null,
+        meals,
+        water_ml: waterMl,
+        sleep_hours: sleepH ? Number(sleepH) : null,
+        steps: stepsCount ? Number(stepsCount) : 0,
+        weight_kg: weightKg ? Number(weightKg) : null,
+        mood,
+      },
     }),
     onSuccess: () => {
       toast.success("Registro salvo!");
@@ -115,9 +157,8 @@ function MonitorPage() {
     return Object.entries(totals).map(([name, value]) => ({ name, value: Math.round(value) }));
   }, [data]);
 
-  const totalKcal = meals.reduce((s, m) => s + m.calories, 0);
-
   if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>;
+
 
   return (
     <section className="px-4 sm:px-8 py-7 space-y-6 max-w-6xl mx-auto">
@@ -126,7 +167,62 @@ function MonitorPage() {
         <Link to="/dashboard" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">← Painel</Link>
       </div>
 
+      {/* ============== Vitais em tempo real ============== */}
+      <div className="rounded-xl bg-white shadow-[var(--shadow-card)] p-6">
+        <div className="flex items-baseline justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-navy font-bold text-lg">⚡ Vitais em tempo real</h2>
+            <p className="text-sm text-muted-foreground mt-1">As metas se recalculam automaticamente com base no seu peso.</p>
+          </div>
+          <span className="text-xs text-muted-foreground">Meta calórica: <strong className="text-navy">{targets.calories} kcal</strong> • Água: <strong className="text-navy">{targets.water_ml} ml</strong></span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
+          <RingStat label="Calorias" value={`${totalKcal}`} unit="kcal" pct={live.kcal} color="oklch(0.72 0.17 162)" />
+          <RingStat label="Hidratação" value={`${waterMl}`} unit="ml" pct={live.water} color="#4285F4" />
+          <RingStat label="Sono" value={sleepH || "0"} unit="h" pct={live.sleep} color="oklch(0.55 0.16 280)" />
+          <RingStat label="Passos" value={stepsCount || "0"} unit="passos" pct={live.steps} color="oklch(0.70 0.18 25)" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+          {/* Hidratação rápida */}
+          <div>
+            <label className="block text-xs font-bold text-navy/70 uppercase tracking-wider">💧 Hidratação (+ rápido)</label>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {[200, 250, 500].map((step) => (
+                <button key={step} type="button" onClick={() => setWaterMl((v) => Math.min(20000, v + step))}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100">
+                  +{step}ml
+                </button>
+              ))}
+              <button type="button" onClick={() => setWaterMl(0)} className="px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold hover:bg-muted/70">
+                Zerar
+              </button>
+              <span className="text-xs text-muted-foreground ml-auto">{Math.round(live.water)}% da meta</span>
+            </div>
+          </div>
+
+          {/* Sono / Passos / Peso */}
+          <div className="grid grid-cols-3 gap-3">
+            <SmallInput label="😴 Sono (h)" value={sleepH} onChange={setSleepH} type="number" step="0.5" max="24" />
+            <SmallInput label="🚶 Passos" value={stepsCount} onChange={setStepsCount} type="number" />
+            <SmallInput label="⚖️ Peso (kg)" value={weightKg} onChange={setWeightKg} type="number" step="0.1" />
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold text-navy/70 uppercase tracking-wider">Humor:</span>
+          {[1, 2, 3, 4, 5].map((m) => (
+            <button key={m} type="button" onClick={() => setMood(m)}
+              className={["w-9 h-9 rounded-full text-lg transition", mood === m ? "bg-navy text-white scale-110" : "bg-muted hover:bg-muted/70"].join(" ")}>
+              {["😞", "😕", "😐", "🙂", "😄"][m - 1]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
         {/* ============== LINE: glicose × calorias ============== */}
         <ChartCard title="📈 Glicose & Calorias (14 dias)" subtitle="Comparativo dos seus indicadores diários.">
           <ResponsiveContainer width="100%" height={260}>
@@ -279,6 +375,39 @@ function ChartCard({ title, subtitle, children, className }: { title: string; su
 
 function EmptyChart({ text }: { text: string }) {
   return <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">{text}</div>;
+}
+
+function RingStat({ label, value, unit, pct, color }: { label: string; value: string; unit: string; pct: number; color: string }) {
+  const r = 32; const c = 2 * Math.PI * r;
+  const off = c - (pct / 100) * c;
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="relative w-[88px] h-[88px]">
+        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+          <circle cx="40" cy="40" r={r} stroke="oklch(0.92 0.012 240)" strokeWidth="8" fill="none" />
+          <circle cx="40" cy="40" r={r} stroke={color} strokeWidth="8" fill="none"
+            strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset .45s cubic-bezier(.4,0,.2,1)" }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-sm font-bold text-navy leading-tight">{value}</span>
+          <span className="text-[10px] text-muted-foreground">{unit}</span>
+        </div>
+      </div>
+      <span className="text-xs font-semibold text-navy mt-1">{label}</span>
+      <span className="text-[10px] text-muted-foreground">{Math.round(pct)}%</span>
+    </div>
+  );
+}
+
+function SmallInput({ label, value, onChange, type = "text", step, max }: { label: string; value: string; onChange: (v: string) => void; type?: string; step?: string; max?: string }) {
+  return (
+    <label className="block">
+      <span className="text-[11px] font-bold text-navy/70 uppercase tracking-wider block">{label}</span>
+      <input type={type} step={step} max={max} value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full mt-1 px-2 py-1.5 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--green)]/30 focus:border-[var(--green)]" />
+    </label>
+  );
 }
 
 // Reexport para evitar tree-shaking de imports não usados acima:
