@@ -377,5 +377,38 @@ function EmptyChart({ text }: { text: string }) {
   return <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">{text}</div>;
 }
 
+function RingStat({ label, value, unit, pct, color }: { label: string; value: string; unit: string; pct: number; color: string }) {
+  const r = 32; const c = 2 * Math.PI * r;
+  const off = c - (pct / 100) * c;
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="relative w-[88px] h-[88px]">
+        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+          <circle cx="40" cy="40" r={r} stroke="oklch(0.92 0.012 240)" strokeWidth="8" fill="none" />
+          <circle cx="40" cy="40" r={r} stroke={color} strokeWidth="8" fill="none"
+            strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset .45s cubic-bezier(.4,0,.2,1)" }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-sm font-bold text-navy leading-tight">{value}</span>
+          <span className="text-[10px] text-muted-foreground">{unit}</span>
+        </div>
+      </div>
+      <span className="text-xs font-semibold text-navy mt-1">{label}</span>
+      <span className="text-[10px] text-muted-foreground">{Math.round(pct)}%</span>
+    </div>
+  );
+}
+
+function SmallInput({ label, value, onChange, type = "text", step, max }: { label: string; value: string; onChange: (v: string) => void; type?: string; step?: string; max?: string }) {
+  return (
+    <label className="block">
+      <span className="text-[11px] font-bold text-navy/70 uppercase tracking-wider block">{label}</span>
+      <input type={type} step={step} max={max} value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full mt-1 px-2 py-1.5 rounded-lg border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--green)]/30 focus:border-[var(--green)]" />
+    </label>
+  );
+}
+
 // Reexport para evitar tree-shaking de imports não usados acima:
 export const _unused = { Area, AreaChart };
