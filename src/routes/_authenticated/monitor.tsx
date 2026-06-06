@@ -167,7 +167,62 @@ function MonitorPage() {
         <Link to="/dashboard" className="text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted/30 text-navy font-medium">← Painel</Link>
       </div>
 
+      {/* ============== Vitais em tempo real ============== */}
+      <div className="rounded-xl bg-white shadow-[var(--shadow-card)] p-6">
+        <div className="flex items-baseline justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-navy font-bold text-lg">⚡ Vitais em tempo real</h2>
+            <p className="text-sm text-muted-foreground mt-1">As metas se recalculam automaticamente com base no seu peso.</p>
+          </div>
+          <span className="text-xs text-muted-foreground">Meta calórica: <strong className="text-navy">{targets.calories} kcal</strong> • Água: <strong className="text-navy">{targets.water_ml} ml</strong></span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
+          <RingStat label="Calorias" value={`${totalKcal}`} unit="kcal" pct={live.kcal} color="oklch(0.72 0.17 162)" />
+          <RingStat label="Hidratação" value={`${waterMl}`} unit="ml" pct={live.water} color="#4285F4" />
+          <RingStat label="Sono" value={sleepH || "0"} unit="h" pct={live.sleep} color="oklch(0.55 0.16 280)" />
+          <RingStat label="Passos" value={stepsCount || "0"} unit="passos" pct={live.steps} color="oklch(0.70 0.18 25)" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+          {/* Hidratação rápida */}
+          <div>
+            <label className="block text-xs font-bold text-navy/70 uppercase tracking-wider">💧 Hidratação (+ rápido)</label>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {[200, 250, 500].map((step) => (
+                <button key={step} type="button" onClick={() => setWaterMl((v) => Math.min(20000, v + step))}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100">
+                  +{step}ml
+                </button>
+              ))}
+              <button type="button" onClick={() => setWaterMl(0)} className="px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold hover:bg-muted/70">
+                Zerar
+              </button>
+              <span className="text-xs text-muted-foreground ml-auto">{Math.round(live.water)}% da meta</span>
+            </div>
+          </div>
+
+          {/* Sono / Passos / Peso */}
+          <div className="grid grid-cols-3 gap-3">
+            <SmallInput label="😴 Sono (h)" value={sleepH} onChange={setSleepH} type="number" step="0.5" max="24" />
+            <SmallInput label="🚶 Passos" value={stepsCount} onChange={setStepsCount} type="number" />
+            <SmallInput label="⚖️ Peso (kg)" value={weightKg} onChange={setWeightKg} type="number" step="0.1" />
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold text-navy/70 uppercase tracking-wider">Humor:</span>
+          {[1, 2, 3, 4, 5].map((m) => (
+            <button key={m} type="button" onClick={() => setMood(m)}
+              className={["w-9 h-9 rounded-full text-lg transition", mood === m ? "bg-navy text-white scale-110" : "bg-muted hover:bg-muted/70"].join(" ")}>
+              {["😞", "😕", "😐", "🙂", "😄"][m - 1]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
         {/* ============== LINE: glicose × calorias ============== */}
         <ChartCard title="📈 Glicose & Calorias (14 dias)" subtitle="Comparativo dos seus indicadores diários.">
           <ResponsiveContainer width="100%" height={260}>
