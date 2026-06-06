@@ -73,8 +73,15 @@ export function LocationMap({
     (async () => {
       const L = (await import("leaflet")).default;
       if (cancelled || !containerRef.current || mapRef.current) return;
-      const map = L.map(containerRef.current, {
+      // StrictMode / HMR: container may still hold a leaflet id from a torn-down map
+      const containerEl = containerRef.current as HTMLDivElement & { _leaflet_id?: number };
+      if (containerEl._leaflet_id) {
+        try { delete containerEl._leaflet_id; } catch { containerEl._leaflet_id = undefined; }
+        containerEl.innerHTML = "";
+      }
+      const map = L.map(containerEl, {
         center: [center.lat, center.lng], zoom: 13, scrollWheelZoom: true, zoomControl: true,
+        fadeAnimation: false, zoomAnimation: false,
       });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -83,17 +90,32 @@ export function LocationMap({
       map.on("dragstart", () => setCenteredOnUser(false));
       map.on("zoomstart", () => setCenteredOnUser(false));
       mapRef.current = map;
-      setTimeout(() => { if (!cancelled) { map.invalidateSize(); map.setView([center.lat, center.lng], 13); } }, 250);
+      setTimeout(() => {
+        if (cancelled || mapRef.current !== map) return;
+        try { map.invalidateSize(); map.setView([center.lat, center.lng], 13); } catch {}
+      }, 250);
     })();
     return () => {
       cancelled = true;
-      markerRefs.current.forEach((m) => m.remove());
+      const map = mapRef.current;
+      // Stop any in-flight animations/transitions before removal to avoid _leaflet_pos crash
+      try { map?.stop?.(); } catch {}
+      markerRefs.current.forEach((m) => { try { m.remove(); } catch {} });
       markerRefs.current.clear();
-      accuracyCircleRef.current?.remove(); accuracyCircleRef.current = null;
-      userMarkerRef.current?.remove(); userMarkerRef.current = null;
-      routeLayerRef.current?.remove(); routeLayerRef.current = null;
-      routeHaloRef.current?.remove(); routeHaloRef.current = null;
-      mapRef.current?.remove(); mapRef.current = null;
+      try { accuracyCircleRef.current?.remove(); } catch {}
+      accuracyCircleRef.current = null;
+      try { userMarkerRef.current?.remove(); } catch {}
+      userMarkerRef.current = null;
+      try { routeLayerRef.current?.remove(); } catch {}
+      routeLayerRef.current = null;
+      try { routeHaloRef.current?.remove(); } catch {}
+      routeHaloRef.current = null;
+      try { map?.remove(); } catch {}
+      mapRef.current = null;
+      const el = containerRef.current as (HTMLDivElement & { _leaflet_id?: number }) | null;
+      if (el) {
+        try { delete el._leaflet_id; } catch { el._leaflet_id = undefined; }
+      }
       didInitialFitRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
