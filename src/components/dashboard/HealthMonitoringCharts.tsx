@@ -200,7 +200,7 @@ export function HealthMonitoringCharts({ data, weeklyGoal = 2000 }: Props) {
       {dietData.length > 0 && (
         <div>
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Composição da Dieta (%)</h3>
-          <div className="h-[250px] w-full flex flex-col items-center">
+          <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
