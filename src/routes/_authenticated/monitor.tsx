@@ -54,15 +54,48 @@ function MonitorPage() {
   const [foodInput, setFoodInput] = useState("");
   const [insight, setInsight] = useState<string | null>(null);
 
+  // Vitais em tempo real
+  const [waterMl, setWaterMl] = useState<number>(0);
+  const [sleepH, setSleepH] = useState<string>("");
+  const [stepsCount, setStepsCount] = useState<string>("");
+  const [weightKg, setWeightKg] = useState<string>("");
+  const [mood, setMood] = useState<number | null>(null);
+
   // Hidrata estado quando carrega registro existente do dia
   useMemo(() => {
     if (todayLog) {
       setGlucose(todayLog.glucose_mg_dl?.toString() ?? "");
       setMeals((todayLog.meals as Meal[]) ?? []);
       setInsight(todayLog.ai_insight ?? null);
+      setWaterMl(todayLog.water_ml ?? 0);
+      setSleepH(todayLog.sleep_hours?.toString() ?? "");
+      setStepsCount(todayLog.steps?.toString() ?? "");
+      setWeightKg(todayLog.weight_kg?.toString() ?? "");
+      setMood(todayLog.mood ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayLog?.id]);
+
+  // Metas dinâmicas (Mifflin-St Jeor simplificado, em tempo real no cliente)
+  const targets = useMemo(() => {
+    const w = Number(weightKg) || 70;
+    const bmr = 10 * w + 6.25 * 170 - 5 * 30 + 5;
+    return {
+      calories: Math.round(bmr * 1.55),
+      water_ml: Math.round(w * 35),
+      sleep_h: 8,
+      steps: 8000,
+    };
+  }, [weightKg]);
+
+  const totalKcal = meals.reduce((s, m) => s + m.calories, 0);
+  const pct = (v: number, max: number) => Math.max(0, Math.min(100, (v / max) * 100));
+  const live = {
+    kcal: pct(totalKcal, targets.calories),
+    water: pct(waterMl, targets.water_ml),
+    sleep: pct(Number(sleepH) || 0, targets.sleep_h),
+    steps: pct(Number(stepsCount) || 0, targets.steps),
+  };
 
   const estimate = useMutation({
     mutationFn: (desc: string) => estimateFn({ data: { description: desc } }),
@@ -76,7 +109,16 @@ function MonitorPage() {
 
   const save = useMutation({
     mutationFn: () => upsertFn({
-      data: { date: today, glucose_mg_dl: glucose ? Number(glucose) : null, meals },
+      data: {
+        date: today,
+        glucose_mg_dl: glucose ? Number(glucose) : null,
+        meals,
+        water_ml: waterMl,
+        sleep_hours: sleepH ? Number(sleepH) : null,
+        steps: stepsCount ? Number(stepsCount) : 0,
+        weight_kg: weightKg ? Number(weightKg) : null,
+        mood,
+      },
     }),
     onSuccess: () => {
       toast.success("Registro salvo!");
