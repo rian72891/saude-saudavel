@@ -225,42 +225,6 @@ export function LocationMap({
     }
   }, [selectedId]);
 
-  // ============== OSRM: native routing (free public demo server) ==============
-  async function fetchRoute(dest: MapMarker, mode: "foot" | "driving") {
-    const map = mapRef.current;
-    if (!map) return;
-    setRouting(true); setRouteError(null);
-    try {
-      const c = centerRef.current;
-      const url = `https://router.project-osrm.org/route/v1/${mode}/${c.lng},${c.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Falha no serviço de rotas");
-      const json = await res.json();
-      const r = json.routes?.[0];
-      if (!r) throw new Error("Rota não encontrada");
-      const coords: [number, number][] = r.geometry.coordinates.map((p: [number, number]) => [p[1], p[0]]);
-
-      const L = (await import("leaflet")).default;
-      routeLayerRef.current?.remove();
-      routeHaloRef.current?.remove();
-      routeHaloRef.current = L.polyline(coords, { color: "#1a73e8", weight: 9, opacity: 0.25, lineCap: "round", lineJoin: "round" }).addTo(map);
-      routeLayerRef.current = L.polyline(coords, { color: "#1a73e8", weight: 5, opacity: 0.95, lineCap: "round", lineJoin: "round" }).addTo(map);
-      map.fitBounds(L.latLngBounds(coords), { padding: [60, 60] });
-
-      setRoute({ destId: dest.id, destTitle: dest.title, distanceM: r.distance, durationS: r.duration, mode });
-    } catch (e) {
-      setRouteError(e instanceof Error ? e.message : "Erro ao traçar rota");
-    } finally {
-      setRouting(false);
-    }
-  }
-
-  function clearRoute() {
-    routeLayerRef.current?.remove(); routeLayerRef.current = null;
-    routeHaloRef.current?.remove(); routeHaloRef.current = null;
-    setRoute(null); setRouteError(null);
-  }
-
   const handleLocate = () => {
     onLocateClick?.();
     if (!mapRef.current) return;
