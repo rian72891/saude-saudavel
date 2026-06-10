@@ -45,15 +45,10 @@ export function LocationMap({
   const markerRefs = useRef<Map<string, import("leaflet").Marker>>(new Map());
   const userMarkerRef = useRef<import("leaflet").Marker | null>(null);
   const accuracyCircleRef = useRef<import("leaflet").Circle | null>(null);
-  const routeLayerRef = useRef<import("leaflet").Polyline | null>(null);
-  const routeHaloRef = useRef<import("leaflet").Polyline | null>(null);
   const didInitialFitRef = useRef(false);
   const onMarkerClickRef = useRef(onMarkerClick);
   const centerRef = useRef(center);
   const [centeredOnUser, setCenteredOnUser] = useState(false);
-  const [route, setRoute] = useState<RouteInfo | null>(null);
-  const [routing, setRouting] = useState(false);
-  const [routeError, setRouteError] = useState<string | null>(null);
 
   useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
   useEffect(() => { centerRef.current = center; }, [center]);
