@@ -93,10 +93,6 @@ export function LocationMap({
       accuracyCircleRef.current = null;
       try { userMarkerRef.current?.remove(); } catch {}
       userMarkerRef.current = null;
-      try { routeLayerRef.current?.remove(); } catch {}
-      routeLayerRef.current = null;
-      try { routeHaloRef.current?.remove(); } catch {}
-      routeHaloRef.current = null;
       try { map?.remove(); } catch {}
       mapRef.current = null;
       const el = containerRef.current as (HTMLDivElement & { _leaflet_id?: number }) | null;
