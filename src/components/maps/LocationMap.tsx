@@ -23,19 +23,11 @@ type Props = {
   onLocateClick?: () => void;
 };
 
-type RouteInfo = {
-  destId: string;
-  destTitle: string;
-  distanceM: number;
-  durationS: number;
-  mode: "foot" | "driving";
-};
-
 /**
  * Mapa Leaflet + OpenStreetMap com:
  * - Blue dot pulsante (posição do usuário)
- * - Navegação NATIVA via OSRM público (gratuito) — desenha rota na própria tela.
- * - Sem redirecionamento para Google Maps.
+ * - Botão "Minha localização" estilo Google Maps
+ * - Pop-up com "Como Chegar" abrindo Google Maps externo
  */
 export function LocationMap({
   center,
