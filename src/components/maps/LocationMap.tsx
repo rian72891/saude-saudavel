@@ -234,16 +234,6 @@ export function LocationMap({
   );
 }
 
-
-function formatDistance(m: number) {
-  return m >= 1000 ? `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km` : `${Math.round(m)} m`;
-}
-function formatDuration(s: number) {
-  const min = Math.round(s / 60);
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60); const r = min % 60;
-  return `${h}h${r ? ` ${r}min` : ""}`;
-}
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
