@@ -247,30 +247,10 @@ export function LocationMap({
         </button>
       )}
 
-      {(routing || route || routeError) && (
-        <div className="route-panel">
-          {routing && <div className="route-panel-line">📡 Calculando rota...</div>}
-          {routeError && <div className="route-panel-line text-red-600">⚠️ {routeError}</div>}
-          {route && !routing && (
-            <>
-              <div className="route-panel-head">
-                <span className="route-panel-mode">{route.mode === "foot" ? "🚶 A pé" : "🚗 De carro"}</span>
-                <button type="button" className="route-panel-close" onClick={clearRoute} aria-label="Fechar rota">✕</button>
-              </div>
-              <div className="route-panel-dest">{route.destTitle}</div>
-              <div className="route-panel-stats">
-                <strong>{formatDuration(route.durationS)}</strong>
-                <span>•</span>
-                <span>{formatDistance(route.distanceM)}</span>
-              </div>
-              <div className="route-panel-credit">Rotas por OSRM/OSM (gratuito)</div>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }
+
 
 function formatDistance(m: number) {
   return m >= 1000 ? `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km` : `${Math.round(m)} m`;
