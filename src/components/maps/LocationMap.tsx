@@ -187,42 +187,26 @@ export function LocationMap({
 
         const safeTitle = escapeHtml(mk.title);
         const safeDesc = mk.description ? escapeHtml(mk.description) : "";
+        const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mk.lat},${mk.lng}`;
         const popupHtml = `
           <div class="saude-popup">
             <h4>${mk.emoji} ${safeTitle}</h4>
             ${safeDesc ? `<p>${safeDesc}</p>` : ""}
             <div class="saude-popup-actions">
-              <button type="button" class="directions" data-mode="foot">🚶 A pé</button>
-              <button type="button" class="directions secondary" data-mode="driving">🚗 De carro</button>
+              <a class="directions" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer">🧭 Como Chegar</a>
             </div>
           </div>`;
 
         const existing = markerRefs.current.get(mk.id);
-        const bindActions = (marker: import("leaflet").Marker) => {
-          marker.off("popupopen");
-          marker.on("popupopen", (e) => {
-            const el = (e as unknown as { popup: { getElement: () => HTMLElement | null } }).popup.getElement();
-            el?.querySelectorAll<HTMLButtonElement>("button.directions").forEach((btn) => {
-              btn.addEventListener("click", () => {
-                const mode = (btn.dataset.mode as "foot" | "driving") ?? "foot";
-                void fetchRoute(mk, mode);
-                map.closePopup();
-              }, { once: true });
-            });
-          });
-        };
-
         if (existing) {
           existing.setLatLng([mk.lat, mk.lng]);
           existing.setIcon(icon);
           existing.setPopupContent(popupHtml);
-          bindActions(existing);
         } else {
           const marker = L.marker([mk.lat, mk.lng], { icon })
             .bindPopup(popupHtml, { closeButton: true, autoPan: true })
             .addTo(map);
           marker.on("click", () => onMarkerClickRef.current?.(mk.id));
-          bindActions(marker);
           markerRefs.current.set(mk.id, marker);
         }
       });
