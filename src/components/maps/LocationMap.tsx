@@ -23,19 +23,11 @@ type Props = {
   onLocateClick?: () => void;
 };
 
-type RouteInfo = {
-  destId: string;
-  destTitle: string;
-  distanceM: number;
-  durationS: number;
-  mode: "foot" | "driving";
-};
-
 /**
  * Mapa Leaflet + OpenStreetMap com:
  * - Blue dot pulsante (posição do usuário)
- * - Navegação NATIVA via OSRM público (gratuito) — desenha rota na própria tela.
- * - Sem redirecionamento para Google Maps.
+ * - Botão "Minha localização" estilo Google Maps
+ * - Pop-up com "Como Chegar" abrindo Google Maps externo
  */
 export function LocationMap({
   center,
@@ -53,15 +45,10 @@ export function LocationMap({
   const markerRefs = useRef<Map<string, import("leaflet").Marker>>(new Map());
   const userMarkerRef = useRef<import("leaflet").Marker | null>(null);
   const accuracyCircleRef = useRef<import("leaflet").Circle | null>(null);
-  const routeLayerRef = useRef<import("leaflet").Polyline | null>(null);
-  const routeHaloRef = useRef<import("leaflet").Polyline | null>(null);
   const didInitialFitRef = useRef(false);
   const onMarkerClickRef = useRef(onMarkerClick);
   const centerRef = useRef(center);
   const [centeredOnUser, setCenteredOnUser] = useState(false);
-  const [route, setRoute] = useState<RouteInfo | null>(null);
-  const [routing, setRouting] = useState(false);
-  const [routeError, setRouteError] = useState<string | null>(null);
 
   useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
   useEffect(() => { centerRef.current = center; }, [center]);
@@ -106,10 +93,6 @@ export function LocationMap({
       accuracyCircleRef.current = null;
       try { userMarkerRef.current?.remove(); } catch {}
       userMarkerRef.current = null;
-      try { routeLayerRef.current?.remove(); } catch {}
-      routeLayerRef.current = null;
-      try { routeHaloRef.current?.remove(); } catch {}
-      routeHaloRef.current = null;
       try { map?.remove(); } catch {}
       mapRef.current = null;
       const el = containerRef.current as (HTMLDivElement & { _leaflet_id?: number }) | null;
@@ -187,42 +170,26 @@ export function LocationMap({
 
         const safeTitle = escapeHtml(mk.title);
         const safeDesc = mk.description ? escapeHtml(mk.description) : "";
+        const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mk.lat},${mk.lng}`;
         const popupHtml = `
           <div class="saude-popup">
             <h4>${mk.emoji} ${safeTitle}</h4>
             ${safeDesc ? `<p>${safeDesc}</p>` : ""}
             <div class="saude-popup-actions">
-              <button type="button" class="directions" data-mode="foot">🚶 A pé</button>
-              <button type="button" class="directions secondary" data-mode="driving">🚗 De carro</button>
+              <a class="directions" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer">🧭 Como Chegar</a>
             </div>
           </div>`;
 
         const existing = markerRefs.current.get(mk.id);
-        const bindActions = (marker: import("leaflet").Marker) => {
-          marker.off("popupopen");
-          marker.on("popupopen", (e) => {
-            const el = (e as unknown as { popup: { getElement: () => HTMLElement | null } }).popup.getElement();
-            el?.querySelectorAll<HTMLButtonElement>("button.directions").forEach((btn) => {
-              btn.addEventListener("click", () => {
-                const mode = (btn.dataset.mode as "foot" | "driving") ?? "foot";
-                void fetchRoute(mk, mode);
-                map.closePopup();
-              }, { once: true });
-            });
-          });
-        };
-
         if (existing) {
           existing.setLatLng([mk.lat, mk.lng]);
           existing.setIcon(icon);
           existing.setPopupContent(popupHtml);
-          bindActions(existing);
         } else {
           const marker = L.marker([mk.lat, mk.lng], { icon })
             .bindPopup(popupHtml, { closeButton: true, autoPan: true })
             .addTo(map);
           marker.on("click", () => onMarkerClickRef.current?.(mk.id));
-          bindActions(marker);
           markerRefs.current.set(mk.id, marker);
         }
       });
@@ -240,42 +207,6 @@ export function LocationMap({
       setCenteredOnUser(false);
     }
   }, [selectedId]);
-
-  // ============== OSRM: native routing (free public demo server) ==============
-  async function fetchRoute(dest: MapMarker, mode: "foot" | "driving") {
-    const map = mapRef.current;
-    if (!map) return;
-    setRouting(true); setRouteError(null);
-    try {
-      const c = centerRef.current;
-      const url = `https://router.project-osrm.org/route/v1/${mode}/${c.lng},${c.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Falha no serviço de rotas");
-      const json = await res.json();
-      const r = json.routes?.[0];
-      if (!r) throw new Error("Rota não encontrada");
-      const coords: [number, number][] = r.geometry.coordinates.map((p: [number, number]) => [p[1], p[0]]);
-
-      const L = (await import("leaflet")).default;
-      routeLayerRef.current?.remove();
-      routeHaloRef.current?.remove();
-      routeHaloRef.current = L.polyline(coords, { color: "#1a73e8", weight: 9, opacity: 0.25, lineCap: "round", lineJoin: "round" }).addTo(map);
-      routeLayerRef.current = L.polyline(coords, { color: "#1a73e8", weight: 5, opacity: 0.95, lineCap: "round", lineJoin: "round" }).addTo(map);
-      map.fitBounds(L.latLngBounds(coords), { padding: [60, 60] });
-
-      setRoute({ destId: dest.id, destTitle: dest.title, distanceM: r.distance, durationS: r.duration, mode });
-    } catch (e) {
-      setRouteError(e instanceof Error ? e.message : "Erro ao traçar rota");
-    } finally {
-      setRouting(false);
-    }
-  }
-
-  function clearRoute() {
-    routeLayerRef.current?.remove(); routeLayerRef.current = null;
-    routeHaloRef.current?.remove(); routeHaloRef.current = null;
-    setRoute(null); setRouteError(null);
-  }
 
   const handleLocate = () => {
     onLocateClick?.();
@@ -299,40 +230,10 @@ export function LocationMap({
         </button>
       )}
 
-      {(routing || route || routeError) && (
-        <div className="route-panel">
-          {routing && <div className="route-panel-line">📡 Calculando rota...</div>}
-          {routeError && <div className="route-panel-line text-red-600">⚠️ {routeError}</div>}
-          {route && !routing && (
-            <>
-              <div className="route-panel-head">
-                <span className="route-panel-mode">{route.mode === "foot" ? "🚶 A pé" : "🚗 De carro"}</span>
-                <button type="button" className="route-panel-close" onClick={clearRoute} aria-label="Fechar rota">✕</button>
-              </div>
-              <div className="route-panel-dest">{route.destTitle}</div>
-              <div className="route-panel-stats">
-                <strong>{formatDuration(route.durationS)}</strong>
-                <span>•</span>
-                <span>{formatDistance(route.distanceM)}</span>
-              </div>
-              <div className="route-panel-credit">Rotas por OSRM/OSM (gratuito)</div>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-function formatDistance(m: number) {
-  return m >= 1000 ? `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} km` : `${Math.round(m)} m`;
-}
-function formatDuration(s: number) {
-  const min = Math.round(s / 60);
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60); const r = min % 60;
-  return `${h}h${r ? ` ${r}min` : ""}`;
-}
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
